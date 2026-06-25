@@ -14,6 +14,7 @@ export const StudySession: React.FC<StudySessionProps> = ({ deck, onFinish, onBa
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [direction, setDirection] = useState<'left' | 'right'>('right');
 
   // Initialize deck
   useEffect(() => {
@@ -31,6 +32,7 @@ export const StudySession: React.FC<StudySessionProps> = ({ deck, onFinish, onBa
 
   const handleNext = () => {
     if (currentIndex < cards.length - 1) {
+      setDirection('right');
       setCurrentIndex(c => c + 1);
       setIsFlipped(false);
     } else {
@@ -40,6 +42,7 @@ export const StudySession: React.FC<StudySessionProps> = ({ deck, onFinish, onBa
 
   const handlePrev = () => {
     if (currentIndex > 0) {
+      setDirection('left');
       setCurrentIndex(c => c - 1);
       setIsFlipped(false);
     }
@@ -122,7 +125,8 @@ export const StudySession: React.FC<StudySessionProps> = ({ deck, onFinish, onBa
       </div>
 
       <div 
-        className={`study-card gradient-${deck.colorId % 5}`}
+        key={currentIndex}
+        className={`study-card gradient-${deck.colorId % 5} slide-in-${direction}`}
         onClick={handleCardClick}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
