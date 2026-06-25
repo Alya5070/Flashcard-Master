@@ -13,6 +13,7 @@ export const StudySession: React.FC<StudySessionProps> = ({ deck, onFinish, onBa
   const [cards, setCards] = useState<Card[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
 
   // Initialize deck
   useEffect(() => {
@@ -41,6 +42,37 @@ export const StudySession: React.FC<StudySessionProps> = ({ deck, onFinish, onBa
     if (currentIndex > 0) {
       setCurrentIndex(c => c - 1);
       setIsFlipped(false);
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStart) return;
+    const touchEnd = e.changedTouches[0].clientX;
+    const distance = touchStart - touchEnd;
+    
+    if (distance > 50) {
+      handleNext(); // Swiped left
+    } else if (distance < -50) {
+      handlePrev(); // Swiped right
+    }
+    setTouchStart(null);
+  };
+
+  const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    
+    // Tap left 25% for previous, right 25% for next, middle 50% for flip
+    if (x < rect.width * 0.25) {
+      handlePrev();
+    } else if (x > rect.width * 0.75) {
+      handleNext();
+    } else {
+      setIsFlipped(!isFlipped);
     }
   };
 
@@ -89,7 +121,13 @@ export const StudySession: React.FC<StudySessionProps> = ({ deck, onFinish, onBa
         <div className="progress-bar-fill" style={{ width: `${progressPercent}%` }}></div>
       </div>
 
-      <div className={`study-card gradient-${deck.colorId % 5}`}>
+      <div 
+        className={`study-card gradient-${deck.colorId % 5}`}
+        onClick={handleCardClick}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        style={{ cursor: 'pointer', userSelect: 'none' }}
+      >
         <div className="study-card-glow"></div>
         
         <div className="study-card-header">
@@ -110,7 +148,7 @@ export const StudySession: React.FC<StudySessionProps> = ({ deck, onFinish, onBa
         <div style={{ position: 'relative', zIndex: 1 }}>
           <button 
             className="btn btn-glass" 
-            onClick={() => setIsFlipped(!isFlipped)}
+            onClick={(e) => { e.stopPropagation(); setIsFlipped(!isFlipped); }}
           >
             {isFlipped ? (
               <>
