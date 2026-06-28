@@ -277,104 +277,102 @@ export const StudySession: React.FC<StudySessionProps> = ({ deck, onFinish, onBa
         </div>
       </div>
 
-      <div className="study-controls" style={isTracking ? { justifyContent: 'space-between', padding: '0 0.5rem' } : {}}>
-        
-        {isTracking ? (
-          <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }} onClick={() => setIsTracking(false)}>
-              <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Track progress</span>
-              <div style={{ 
-                width: '36px', height: '20px', borderRadius: '10px', 
-                backgroundColor: 'var(--primary)', 
-                position: 'relative', transition: '0.2s' 
-              }}>
-                <div style={{ 
-                  width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#fff', 
-                  position: 'absolute', top: '2px', left: '18px', transition: '0.2s' 
-                }}></div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '1rem', position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
-              <button 
-                className="btn-icon-circle" 
-                onClick={handleMarkLearning}
-                style={{ backgroundColor: 'var(--bg-input)', color: '#f97316', width: '56px', height: '56px', border: '1px solid var(--border-color)' }}
-              >
-                <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-              <button 
-                className="btn-icon-circle" 
-                onClick={handleMarkKnown}
-                style={{ backgroundColor: 'var(--bg-input)', color: '#10b981', width: '56px', height: '56px', border: '1px solid var(--border-color)' }}
-              >
-                <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button className="btn-icon-circle" onClick={handleUndo} title="Undo" style={{ backgroundColor: 'var(--bg-input)', border: '1px solid var(--border-color)' }}>
-                <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
-              </button>
-              <button className="btn-icon-circle" onClick={handleShuffle} title="Shuffle Cards" style={{ backgroundColor: 'var(--bg-input)', border: '1px solid var(--border-color)' }}>
-                <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', position: 'absolute', left: '1.5rem' }} onClick={() => setIsTracking(true)}>
-              <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-muted)' }}>Track progress</span>
-              <div style={{ 
-                width: '36px', height: '20px', borderRadius: '10px', 
-                backgroundColor: 'var(--bg-input)', border: '1px solid var(--border-color)',
-                position: 'relative', transition: '0.2s' 
-              }}>
-                <div style={{ 
-                  width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'var(--text-muted)', 
-                  position: 'absolute', top: '1px', left: '2px', transition: '0.2s' 
-                }}></div>
-              </div>
-            </div>
-
-            <button 
-              className="study-nav-btn" 
-              onClick={handlePrev} 
-              disabled={currentIndex === 0}
-              style={{ opacity: currentIndex === 0 ? 0.5 : 1, marginLeft: 'auto' }}
-            >
-              <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-              Previous
-            </button>
-
-            <button 
-              className="btn-icon-circle" 
-              onClick={handleShuffle} 
-              title="Shuffle Cards" 
-              style={{ backgroundColor: 'var(--bg-card)', margin: '0 0.5rem' }}
-            >
-              <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                <polyline points="16 3 21 3 21 8"></polyline>
-                <line x1="4" y1="20" x2="21" y2="3"></line>
-                <polyline points="21 16 21 21 16 21"></polyline>
-                <line x1="15" y1="15" x2="21" y2="21"></line>
-                <line x1="4" y1="4" x2="9" y2="9"></line>
-              </svg>
-            </button>
+      <div className="study-controls">
+        <div className="study-controls-container" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
+          
+          {/* Top Row: Settings & Actions */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 0.5rem' }}>
             
-            <button 
-              className="study-nav-btn" 
-              onClick={handleNext}
-            >
-              {currentIndex === cards.length - 1 ? 'Finish' : 'Next'}
-              <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </>
-        )}
+            {/* Track Progress Toggle */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }} onClick={() => setIsTracking(!isTracking)}>
+              <span style={{ fontSize: '0.9rem', fontWeight: 600, color: isTracking ? 'var(--text-main)' : 'var(--text-muted)' }}>Track progress</span>
+              <div style={{ 
+                width: '36px', height: '20px', borderRadius: '10px', flexShrink: 0,
+                backgroundColor: isTracking ? 'var(--primary)' : 'var(--bg-input)', 
+                border: isTracking ? 'none' : '1px solid var(--border-color)',
+                position: 'relative', transition: '0.2s' 
+              }}>
+                <div style={{ 
+                  width: '16px', height: '16px', borderRadius: '50%', 
+                  backgroundColor: isTracking ? '#fff' : 'var(--text-muted)', 
+                  position: 'absolute', top: isTracking ? '2px' : '1px', left: isTracking ? '18px' : '2px', transition: '0.2s' 
+                }}></div>
+              </div>
+            </div>
+
+            {/* Right Actions (Undo/Shuffle when tracking is ON) */}
+            {isTracking && (
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button className="btn-icon-circle" onClick={handleUndo} title="Undo" style={{ backgroundColor: 'var(--bg-input)', border: '1px solid var(--border-color)', width: '36px', height: '36px' }}>
+                  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
+                </button>
+                <button className="btn-icon-circle" onClick={handleShuffle} title="Shuffle Cards" style={{ backgroundColor: 'var(--bg-input)', border: '1px solid var(--border-color)', width: '36px', height: '36px' }}>
+                  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Bottom Row: Main Navigation Buttons */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', paddingBottom: '1rem' }}>
+            {isTracking ? (
+              <>
+                <button 
+                  className="btn-icon-circle" 
+                  onClick={handleMarkLearning}
+                  style={{ backgroundColor: 'var(--bg-input)', color: '#f97316', width: '64px', height: '64px', border: '1px solid var(--border-color)' }}
+                >
+                  <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+                <button 
+                  className="btn-icon-circle" 
+                  onClick={handleMarkKnown}
+                  style={{ backgroundColor: 'var(--bg-input)', color: '#10b981', width: '64px', height: '64px', border: '1px solid var(--border-color)' }}
+                >
+                  <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                </button>
+              </>
+            ) : (
+              <>
+                <button 
+                  className="study-nav-btn" 
+                  onClick={handlePrev} 
+                  disabled={currentIndex === 0}
+                  style={{ opacity: currentIndex === 0 ? 0.5 : 1, padding: '0.75rem 1rem' }}
+                >
+                  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                
+                <button 
+                  className="btn-icon-circle" 
+                  onClick={handleShuffle} 
+                  title="Shuffle Cards" 
+                  style={{ backgroundColor: 'var(--bg-card)', width: '44px', height: '44px' }}
+                >
+                  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                    <polyline points="16 3 21 3 21 8"></polyline>
+                    <line x1="4" y1="20" x2="21" y2="3"></line>
+                    <polyline points="21 16 21 21 16 21"></polyline>
+                    <line x1="15" y1="15" x2="21" y2="21"></line>
+                    <line x1="4" y1="4" x2="9" y2="9"></line>
+                  </svg>
+                </button>
+                
+                <button 
+                  className="study-nav-btn" 
+                  onClick={handleNext}
+                  style={{ padding: '0.75rem 1rem' }}
+                >
+                  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </>
+            )}
+          </div>
+        </div>
       </div>
       
     </div>
