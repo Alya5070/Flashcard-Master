@@ -280,7 +280,7 @@ export default function App() {
         </header>
       )}
 
-      <main className="main-content">
+      <main className="main-content" style={view === 'study' ? { paddingBottom: '1.5rem' } : {}}>
         {view === 'dashboard' && (
           <Dashboard 
             decks={decks} 
@@ -325,21 +325,23 @@ export default function App() {
       </main>
 
       {/* Bottom Nav - 3 Items */}
-      <nav className="bottom-nav">
-        <div className={`nav-item ${view === 'dashboard' || (view === 'edit' && !activeDeckId) ? 'active' : ''}`} onClick={() => { setView('dashboard'); setActiveDeckId(null); }}>
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-          Cards
-        </div>
-        
-        <div className="nav-item special-add" onClick={handleCreateDeck}>
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
-        </div>
-        
-        <div className={`nav-item ${view === 'profile' ? 'active' : ''}`} onClick={() => { setView('profile'); setActiveDeckId(null); }}>
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-          Profile
-        </div>
-      </nav>
+      {view !== 'study' && (
+        <nav className="bottom-nav">
+          <div className={`nav-item ${view === 'dashboard' || (view === 'edit' && !activeDeckId) ? 'active' : ''}`} onClick={() => { setView('dashboard'); setActiveDeckId(null); }}>
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            Cards
+          </div>
+          
+          <div className="nav-item special-add" onClick={handleCreateDeck}>
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
+          </div>
+          
+          <div className={`nav-item ${view === 'profile' ? 'active' : ''}`} onClick={() => { setView('profile'); setActiveDeckId(null); }}>
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            Profile
+          </div>
+        </nav>
+      )}
 
       <ImportModal 
         isOpen={isImportOpen} 
