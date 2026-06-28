@@ -16,35 +16,118 @@ export const StudySession: React.FC<StudySessionProps> = ({ deck, onFinish, onBa
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [direction, setDirection] = useState<'left' | 'right'>('right');
 
-  // Initialize deck
+  // Tracking State
+  const [isTracking, setIsTracking] = useState(false);
+  const [knownCards, setKnownCards] = useState<string[]>([]);
+  const [learningCards, setLearningCards] = useState<string[]>([]);
+  const [history, setHistory] = useState<{index: number, known: string[], learning: string[]}[]>([]);
+
+  // Initialize deck and load progress
   useEffect(() => {
     if (deck && deck.cards.length > 0) {
       setCards(deck.cards);
+      
+      const saved = localStorage.getItem(`study_progress_${deck.id}`);
+      if (saved) {
+        try {
+          const data = JSON.parse(saved);
+          if (data.isTracking) {
+            setIsTracking(data.isTracking);
+            setKnownCards(data.knownCards || []);
+            setLearningCards(data.learningCards || []);
+            setCurrentIndex(data.currentIndex || 0);
+          }
+        } catch (e) {}
+      }
     }
   }, [deck]);
+
+  // Save progress
+  useEffect(() => {
+    if (deck && isTracking) {
+      localStorage.setItem(`study_progress_${deck.id}`, JSON.stringify({
+        isTracking, knownCards, learningCards, currentIndex
+      }));
+    } else if (deck && !isTracking) {
+      localStorage.removeItem(`study_progress_${deck.id}`);
+    }
+  }, [isTracking, knownCards, learningCards, currentIndex, deck]);
 
   const handleShuffle = () => {
     const shuffled = [...cards].sort(() => Math.random() - 0.5);
     setCards(shuffled);
     setCurrentIndex(0);
     setIsFlipped(false);
+    setHistory([]);
+    setKnownCards([]);
+    setLearningCards([]);
   };
 
-  const handleNext = () => {
+  const saveHistory = () => {
+    setHistory(prev => [...prev, { index: currentIndex, known: [...knownCards], learning: [...learningCards] }]);
+  };
+
+  const handleUndo = () => {
+    if (history.length > 0) {
+      const last = history[history.length - 1];
+      setCurrentIndex(last.index);
+      setKnownCards(last.known);
+      setLearningCards(last.learning);
+      setHistory(prev => prev.slice(0, -1));
+      setDirection('left');
+      setIsFlipped(false);
+    }
+  };
+
+  const advanceCard = () => {
     if (currentIndex < cards.length - 1) {
       setDirection('right');
       setCurrentIndex(c => c + 1);
       setIsFlipped(false);
     } else {
+      // Finished deck
       onFinish();
+      localStorage.removeItem(`study_progress_${deck.id}`);
+    }
+  };
+
+  const handleMarkKnown = () => {
+    saveHistory();
+    const cardId = cards[currentIndex].id;
+    if (!knownCards.includes(cardId)) {
+      setKnownCards(prev => [...prev, cardId]);
+    }
+    setLearningCards(prev => prev.filter(id => id !== cardId));
+    advanceCard();
+  };
+
+  const handleMarkLearning = () => {
+    saveHistory();
+    const cardId = cards[currentIndex].id;
+    if (!learningCards.includes(cardId)) {
+      setLearningCards(prev => [...prev, cardId]);
+    }
+    setKnownCards(prev => prev.filter(id => id !== cardId));
+    advanceCard();
+  };
+
+  const handleNext = () => {
+    if (isTracking) {
+      handleMarkKnown();
+    } else {
+      advanceCard();
     }
   };
 
   const handlePrev = () => {
-    if (currentIndex > 0) {
-      setDirection('left');
-      setCurrentIndex(c => c - 1);
-      setIsFlipped(false);
+    if (isTracking) {
+      handleMarkLearning();
+    } else {
+      if (currentIndex > 0) {
+        setDirection('left');
+        setCurrentIndex(c => c - 1);
+        setIsFlipped(false);
+      }
     }
   };
 
@@ -58,18 +141,21 @@ export const StudySession: React.FC<StudySessionProps> = ({ deck, onFinish, onBa
     const distance = touchStart - touchEnd;
     
     if (distance > 50) {
-      handleNext(); // Swiped left
+      handlePrev(); // Swipe left (negative/learning)
     } else if (distance < -50) {
-      handlePrev(); // Swiped right
+      handleNext(); // Swipe right (positive/know)
     }
     setTouchStart(null);
   };
 
   const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isTracking) {
+      setIsFlipped(!isFlipped);
+      return;
+    }
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     
-    // Tap left 25% for previous, right 25% for next, middle 50% for flip
     if (x < rect.width * 0.25) {
       handlePrev();
     } else if (x > rect.width * 0.75) {
@@ -115,10 +201,27 @@ export const StudySession: React.FC<StudySessionProps> = ({ deck, onFinish, onBa
         </div>
       </div>
 
-      <div className="study-progress">
-        <span>Session Progress</span>
-        <span style={{ color: 'var(--primary)', fontWeight: 700 }}>{currentIndex + 1} / {cards.length}</span>
-      </div>
+      {isTracking ? (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#f97316', fontWeight: 600 }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '2px solid #f97316', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {learningCards.length}
+            </div>
+            Still learning
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#10b981', fontWeight: 600 }}>
+            Know
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '2px solid #10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {knownCards.length}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="study-progress">
+          <span>Session Progress</span>
+          <span style={{ color: 'var(--primary)', fontWeight: 700 }}>{currentIndex + 1} / {cards.length}</span>
+        </div>
+      )}
       
       <div className="progress-bar-container">
         <div className="progress-bar-fill" style={{ width: `${progressPercent}%` }}></div>
@@ -174,43 +277,104 @@ export const StudySession: React.FC<StudySessionProps> = ({ deck, onFinish, onBa
         </div>
       </div>
 
-      <div className="study-controls">
-        <button 
-          className="study-nav-btn" 
-          onClick={handlePrev} 
-          disabled={currentIndex === 0}
-          style={{ opacity: currentIndex === 0 ? 0.5 : 1 }}
-        >
-          <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-          Previous
-        </button>
-
-        <button 
-          className="btn-icon-circle" 
-          onClick={handleShuffle} 
-          title="Shuffle Cards" 
-          style={{ backgroundColor: 'var(--bg-card)', position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}
-        >
-          <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-            <polyline points="16 3 21 3 21 8"></polyline>
-            <line x1="4" y1="20" x2="21" y2="3"></line>
-            <polyline points="21 16 21 21 16 21"></polyline>
-            <line x1="15" y1="15" x2="21" y2="21"></line>
-            <line x1="4" y1="4" x2="9" y2="9"></line>
-          </svg>
-        </button>
+      <div className="study-controls" style={isTracking ? { justifyContent: 'space-between', padding: '0 0.5rem' } : {}}>
         
-        <button 
-          className="study-nav-btn" 
-          onClick={handleNext}
-        >
-          {currentIndex === cards.length - 1 ? 'Finish' : 'Next'}
-          <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
+        {isTracking ? (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }} onClick={() => setIsTracking(false)}>
+              <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Track progress</span>
+              <div style={{ 
+                width: '36px', height: '20px', borderRadius: '10px', 
+                backgroundColor: 'var(--primary)', 
+                position: 'relative', transition: '0.2s' 
+              }}>
+                <div style={{ 
+                  width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#fff', 
+                  position: 'absolute', top: '2px', left: '18px', transition: '0.2s' 
+                }}></div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem', position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+              <button 
+                className="btn-icon-circle" 
+                onClick={handleMarkLearning}
+                style={{ backgroundColor: 'var(--bg-input)', color: '#f97316', width: '56px', height: '56px', border: '1px solid var(--border-color)' }}
+              >
+                <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+              <button 
+                className="btn-icon-circle" 
+                onClick={handleMarkKnown}
+                style={{ backgroundColor: 'var(--bg-input)', color: '#10b981', width: '56px', height: '56px', border: '1px solid var(--border-color)' }}
+              >
+                <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button className="btn-icon-circle" onClick={handleUndo} title="Undo" style={{ backgroundColor: 'var(--bg-input)', border: '1px solid var(--border-color)' }}>
+                <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
+              </button>
+              <button className="btn-icon-circle" onClick={handleShuffle} title="Shuffle Cards" style={{ backgroundColor: 'var(--bg-input)', border: '1px solid var(--border-color)' }}>
+                <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', position: 'absolute', left: '1.5rem' }} onClick={() => setIsTracking(true)}>
+              <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-muted)' }}>Track progress</span>
+              <div style={{ 
+                width: '36px', height: '20px', borderRadius: '10px', 
+                backgroundColor: 'var(--bg-input)', border: '1px solid var(--border-color)',
+                position: 'relative', transition: '0.2s' 
+              }}>
+                <div style={{ 
+                  width: '16px', height: '16px', borderRadius: '50%', backgroundColor: 'var(--text-muted)', 
+                  position: 'absolute', top: '1px', left: '2px', transition: '0.2s' 
+                }}></div>
+              </div>
+            </div>
+
+            <button 
+              className="study-nav-btn" 
+              onClick={handlePrev} 
+              disabled={currentIndex === 0}
+              style={{ opacity: currentIndex === 0 ? 0.5 : 1, marginLeft: 'auto' }}
+            >
+              <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+              Previous
+            </button>
+
+            <button 
+              className="btn-icon-circle" 
+              onClick={handleShuffle} 
+              title="Shuffle Cards" 
+              style={{ backgroundColor: 'var(--bg-card)', margin: '0 0.5rem' }}
+            >
+              <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                <polyline points="16 3 21 3 21 8"></polyline>
+                <line x1="4" y1="20" x2="21" y2="3"></line>
+                <polyline points="21 16 21 21 16 21"></polyline>
+                <line x1="15" y1="15" x2="21" y2="21"></line>
+                <line x1="4" y1="4" x2="9" y2="9"></line>
+              </svg>
+            </button>
+            
+            <button 
+              className="study-nav-btn" 
+              onClick={handleNext}
+            >
+              {currentIndex === cards.length - 1 ? 'Finish' : 'Next'}
+              <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </>
+        )}
       </div>
       
     </div>
