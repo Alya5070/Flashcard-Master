@@ -133,8 +133,8 @@ app.get('/api/decks', authenticateToken, async (req, res) => {
 });
 
 app.post('/api/decks', authenticateToken, async (req, res) => {
-  const { name, colorId, cards, tags } = req.body;
-  const deckId = crypto.randomUUID();
+  const { id, name, colorId, cards, tags } = req.body;
+  const deckId = id || crypto.randomUUID();
   const date = new Date().toISOString();
 
   try {

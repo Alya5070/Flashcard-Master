@@ -732,3 +732,9 @@ body {
 .slide-in-left {
   animation: slideInLeft 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards;
 }
+
+@media (max-width: 450px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+}
